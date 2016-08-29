@@ -107,6 +107,10 @@ namespace ecs {
     bool invertedX, invertedY;
     MouseControls(bool invertedX, bool invertedY);
   };
+  #define SIG_Physics
+  struct Physics : public Component<Physics> {
+
+  };
 
   /*
    * TODO: Add an entry to the end of each of the three directives below for any new component types you create.
@@ -122,7 +126,8 @@ namespace ecs {
     AngularVel,     \
     Perspective,    \
     WasdControls,   \
-    MouseControls
+    MouseControls,  \
+    Physics
 
   #define GEN_COLL_DECLS \
     GEN_COMP_COLL_DECL(Existence)     \
@@ -134,7 +139,8 @@ namespace ecs {
     GEN_COMP_COLL_DECL(AngularVel)    \
     GEN_COMP_COLL_DECL(Perspective)   \
     GEN_COMP_COLL_DECL(WasdControls)  \
-    GEN_COMP_COLL_DECL(MouseControls)
+    GEN_COMP_COLL_DECL(MouseControls) \
+    GEN_COMP_COLL_DECL(Physics)
 
   #define GEN_COLL_DEFNS \
     GEN_COMP_COLL_DEFN(Existence)     \
@@ -146,7 +152,8 @@ namespace ecs {
     GEN_COMP_COLL_DEFN(AngularVel)    \
     GEN_COMP_COLL_DEFN(Perspective)   \
     GEN_COMP_COLL_DEFN(WasdControls)  \
-    GEN_COMP_COLL_DEFN(MouseControls)
+    GEN_COMP_COLL_DEFN(MouseControls) \
+    GEN_COMP_COLL_DEFN(Physics)
 
   /*
    * This macro does the following:

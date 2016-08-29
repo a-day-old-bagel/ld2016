@@ -49,17 +49,19 @@ namespace ecs {
   GEN_COMP_DEFN_REQD(Perspective, ENUM_Existence | ENUM_Position | ENUM_Orientation);
   GEN_COMP_DEFN_REQD(WasdControls, ENUM_Existence | ENUM_LinearVel | ENUM_Orientation);
   GEN_COMP_DEFN_REQD(MouseControls, ENUM_Existence | ENUM_Orientation);
+  GEN_COMP_DEFN_REQD(Physics, ENUM_Position | ENUM_LinearVel | ENUM_Orientation | ENUM_AngularVel);
 
   GEN_COMP_DEFN_DEPN(Existence, ALL & ~ENUM_Existence);
-  GEN_COMP_DEFN_DEPN(Position, ENUM_LinearVel | ENUM_Perspective);
-  GEN_COMP_DEFN_DEPN(LinearVel, ENUM_WasdControls);
+  GEN_COMP_DEFN_DEPN(Position, ENUM_LinearVel | ENUM_Perspective | ENUM_Physics);
+  GEN_COMP_DEFN_DEPN(LinearVel, ENUM_WasdControls | ENUM_Physics);
   GEN_COMP_DEFN_DEPN(Scale, ENUM_ScalarMultFunc);
   GEN_COMP_DEFN_DEPN(ScalarMultFunc, NONE);
-  GEN_COMP_DEFN_DEPN(Orientation, ENUM_AngularVel | ENUM_Perspective | ENUM_WasdControls);
-  GEN_COMP_DEFN_DEPN(AngularVel, NONE);
+  GEN_COMP_DEFN_DEPN(Orientation, ENUM_AngularVel | ENUM_Perspective | ENUM_WasdControls | ENUM_Physics);
+  GEN_COMP_DEFN_DEPN(AngularVel, ENUM_Physics);
   GEN_COMP_DEFN_DEPN(Perspective, NONE);
   GEN_COMP_DEFN_DEPN(WasdControls, NONE);
   GEN_COMP_DEFN_DEPN(MouseControls, NONE);
+  GEN_COMP_DEFN_DEPN(Physics, NONE);
 
   /*
    * The following area is for the definitions of any component methods you create. Make sure that constructor
