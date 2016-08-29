@@ -220,6 +220,9 @@ class PyramidGame : public Game {
     }
 };
 
+Uint8 *gameMusic[4];
+Uint32 gameMusicLength[4];
+
 void main_loop(void *instance) {
   PyramidGame *game = (PyramidGame *) instance;
   float dt = game->mainLoop(game->systemsHandlerDlgt);
@@ -230,6 +233,65 @@ int main(int argc, char **argv) {
   PyramidGame game(argc, argv);
   EcsResult status = game.init();
   if (status.isError()) { fprintf(stderr, "%s", status.toString().c_str()); }
+
+  int count = SDL_GetNumAudioDevices(0);
+  fprintf(stderr, "Number of audio devices: %d\n", count);
+  for (int i = 0; i < count; ++i) {
+    fprintf(stderr, "Audio device %d: %s\n", i, SDL_GetAudioDeviceName(i, 0));
+  }
+  SDL_AudioSpec want, have;
+  SDL_AudioDeviceID dev;
+  SDL_memset(&want, 0, sizeof(want));
+  want.freq = 4800;
+  want.format = AUDIO_F32;
+  want.channels = 2;
+  want.samples = 4096;
+  want.callback = NULL;
+
+  int i = 0;
+  SDL_LoadWAV(
+      "./assets/audio/TitleScreen.wav",
+      &want,
+      &gameMusic[i],
+      &gameMusicLength[i]);
+  i += 1;
+  SDL_LoadWAV(
+      "./assets/audio/IndustrialTechno_2.wav",
+      &want,
+      &gameMusic[i],
+      &gameMusicLength[i]);
+  i += 1;
+  SDL_LoadWAV(
+      "./assets/audio/YouLose.wav",
+      &want,
+      &gameMusic[i],
+      &gameMusicLength[i]);
+  i += 1;
+  SDL_LoadWAV(
+      "./assets/audio/YouWin.wav",
+      &want,
+      &gameMusic[i],
+      &gameMusicLength[i]);
+  i += 1;
+
+  dev = SDL_OpenAudioDevice(
+      NULL,  // device
+      0,  // is capture
+      &want,  // desired
+      &have,  // obtained
+      0  // allowed changes
+      );
+  if (dev == 0) {
+    fprintf(stderr, "Failed to open SDL audio device: %s\n", SDL_GetError());
+  } else {
+    for (int i = 0; i < 4; ++i) {
+      SDL_QueueAudio(
+          dev,
+          gameMusic[i],
+          gameMusicLength[i]);
+    }
+    SDL_PauseAudioDevice(dev, 0);  // start audio
+  }
 
 #ifdef __EMSCRIPTEN__
     emscripten_set_main_loop_arg(main_loop, (void*)&game, 0, 1);

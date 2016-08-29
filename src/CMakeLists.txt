@@ -47,6 +47,5 @@ add_custom_command(TARGET pyramid PRE_BUILD
                        ${CMAKE_CURRENT_SOURCE_DIR}/assets $<TARGET_FILE_DIR:pyramid>/assets)
 endif()
 
-
 add_subdirectory("./common")
 add_subdirectory("./sandbox")

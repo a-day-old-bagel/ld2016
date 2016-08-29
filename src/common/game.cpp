@@ -59,7 +59,7 @@ namespace ld2016 {
 
   void Game::m_initSdl() {
     // Initialize SDL
-    if (SDL_Init(SDL_INIT_VIDEO) != 0) {
+    if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO) != 0) {
       fprintf(stderr, "Failed to initialize SDL: %s\n",
           SDL_GetError());
       exit(EXIT_FAILURE);
