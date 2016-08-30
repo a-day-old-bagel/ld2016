@@ -121,7 +121,7 @@ namespace ld2016 {
 
     if (m_lastTime == 0.0f) {
       // FIXME: The zero dt this causes might not be desirable.
-      m_lastTime = (float)SDL_GetTicks() * 1000.0f;
+      m_lastTime = (float)SDL_GetTicks() * 0.001f;
     }
 
     // Check for SDL events (user input, etc.)
@@ -151,7 +151,7 @@ namespace ld2016 {
     }
 
     // Calculate the time since the last frame was drawn
-    float currentTime = (float)SDL_GetTicks() * 1000.0f;
+    float currentTime = (float)SDL_GetTicks() * 0.001f;
     float dt = currentTime - m_lastTime;
     m_lastTime = currentTime;
     // Advance the scene simulation.
