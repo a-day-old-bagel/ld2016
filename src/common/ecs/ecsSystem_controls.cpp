@@ -24,9 +24,7 @@
 #include "glm/gtx/transform.hpp"
 #include "glm/gtx/matrix_decompose.hpp"
 
-#define WASD_MAX_VELOCITY 0.00001f
-#define WASD_ACCELERATION 0.0001f
-#define WASD_FRICTION_INVERSE 10000.f     // less is more
+#define WASD_ACCELERATION 0.5f //1000.f
 #define MOUSE_SENSITIVITY 0.1f
 
 namespace ecs {
@@ -54,7 +52,7 @@ namespace ecs {
     return keyStates[firstKey] || anyPressed(keyStates, keys...);
   }
   void ControlSystem::onTick(float dt) {
-    for (auto id : registeredIDs[0]) {
+    for (auto id : registries[0].ids) {
       MouseControls* mouseControls;
       state->getMouseControls(id, &mouseControls);
       Orientation* orientation;
@@ -88,7 +86,7 @@ namespace ecs {
         }
       }
     }
-    for (auto id : registeredIDs[1]) {
+    for (auto id : (registries[1].ids)) {
       WasdControls* wasdControls;
       state->getWasdControls(id, &wasdControls);
       Orientation* orientation;
@@ -100,8 +98,6 @@ namespace ecs {
           continue;
         }
       }
-      LinearVel* linearVel;
-      state->getLinearVel(id, &linearVel);
 
       // zero out acceleration
       wasdControls->accel = glm::vec3();
@@ -117,37 +113,29 @@ namespace ecs {
       DO_ON_KEYS(wasdControls->accel += glm::vec3( 0.0f,  0.0f,  1.0f), SDL_SCANCODE_SPACE)
       #undef DO_ON_KEYS
 
-      glm::quat quat = orientation->getQuat(1.0);
-      glm::mat3 rotMat;
-      switch (wasdControls->style) {
-        case WasdControls::ROTATE_ABOUT_Z: {
-          glm::vec3 axis = glm::vec3(0.f, 0.f, 1.f);
-          glm::vec3 orth0 = glm::vec3(0.f, 1.0, 0.f);
-          glm::vec3 transformed = quat * orth0;
-          glm::vec3 projected = transformed - (glm::dot(transformed, axis) * axis);
-          projected = glm::normalize(projected);
-          float rotZ = acosf(glm::dot(orth0, projected)) * (transformed.x < 0.f ? 1.f : -1.f);
-          rotMat = glm::mat3(glm::rotate(rotZ, glm::vec3(0.f, 0.f, 1.f)));
-          break;
-        }
-        case WasdControls::ROTATE_ALL_AXES:
-          rotMat = glm::mat3_cast(quat);
-        default:
-          break;
-      }
-      // Rotate the movement axis to the correct orientation
-      wasdControls->accel = rotMat * wasdControls->accel;
       if (length(wasdControls->accel) > 0.0f) {
+        glm::quat quat = orientation->getQuat(1.0);
+        glm::mat3 rotMat;
+        switch (wasdControls->style) {
+          case WasdControls::ROTATE_ABOUT_Z: {
+            glm::vec3 axis = glm::vec3(0.f, 0.f, 1.f);
+            glm::vec3 orth0 = glm::vec3(0.f, 1.0, 0.f);
+            glm::vec3 transformed = quat * orth0;
+            glm::vec3 projected = transformed - (glm::dot(transformed, axis) * axis);
+            projected = glm::normalize(projected);
+            float rotZ = acosf(glm::dot(orth0, projected)) * (transformed.x < 0.f ? 1.f : -1.f);
+            rotMat = glm::mat3(glm::rotate(rotZ, glm::vec3(0.f, 0.f, 1.f)));
+            break;
+          }
+          case WasdControls::ROTATE_ALL_AXES:
+            rotMat = glm::mat3_cast(quat);
+          default:
+            break;
+        }
+        // Rotate the movement axis to the correct orientation
+        wasdControls->accel = rotMat * wasdControls->accel;
         wasdControls->accel = WASD_ACCELERATION * glm::normalize(wasdControls->accel);
       }
-      // Update object velocity based on the acceleration
-      linearVel->vec += dt * wasdControls->accel;
-      // Cap object velocity
-      if (glm::length(linearVel->vec) > WASD_MAX_VELOCITY) {
-        linearVel->vec = WASD_MAX_VELOCITY * glm::normalize(linearVel->vec);
-      }
-      // Apply simple brakes
-      linearVel->vec *= std::min(1.f, WASD_FRICTION_INVERSE / dt);
     }
     queuedEvents.clear();
   }

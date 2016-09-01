@@ -41,23 +41,19 @@ namespace ecs {
    */
   GEN_COMP_DEFN_REQD(Existence, NONE);
   GEN_COMP_DEFN_REQD(Position, ENUM_Existence);
-  GEN_COMP_DEFN_REQD(LinearVel, ENUM_Existence | ENUM_Position);
   GEN_COMP_DEFN_REQD(Scale, ENUM_Existence);
   GEN_COMP_DEFN_REQD(ScalarMultFunc, ENUM_Existence | ENUM_Scale);
   GEN_COMP_DEFN_REQD(Orientation, ENUM_Existence);
-  GEN_COMP_DEFN_REQD(AngularVel, ENUM_Existence | ENUM_Orientation);
   GEN_COMP_DEFN_REQD(Perspective, ENUM_Existence | ENUM_Position | ENUM_Orientation);
-  GEN_COMP_DEFN_REQD(WasdControls, ENUM_Existence | ENUM_LinearVel | ENUM_Orientation);
+  GEN_COMP_DEFN_REQD(WasdControls, ENUM_Existence | ENUM_Orientation);
   GEN_COMP_DEFN_REQD(MouseControls, ENUM_Existence | ENUM_Orientation);
-  GEN_COMP_DEFN_REQD(Physics, ENUM_Position | ENUM_LinearVel | ENUM_Orientation | ENUM_AngularVel);
+  GEN_COMP_DEFN_REQD(Physics, ENUM_Existence | ENUM_Position | ENUM_Orientation);
 
   GEN_COMP_DEFN_DEPN(Existence, ALL & ~ENUM_Existence);
-  GEN_COMP_DEFN_DEPN(Position, ENUM_LinearVel | ENUM_Perspective | ENUM_Physics);
-  GEN_COMP_DEFN_DEPN(LinearVel, ENUM_WasdControls | ENUM_Physics);
+  GEN_COMP_DEFN_DEPN(Position, ENUM_Perspective | ENUM_Physics);
   GEN_COMP_DEFN_DEPN(Scale, ENUM_ScalarMultFunc);
   GEN_COMP_DEFN_DEPN(ScalarMultFunc, NONE);
-  GEN_COMP_DEFN_DEPN(Orientation, ENUM_AngularVel | ENUM_Perspective | ENUM_WasdControls | ENUM_Physics);
-  GEN_COMP_DEFN_DEPN(AngularVel, ENUM_Physics);
+  GEN_COMP_DEFN_DEPN(Orientation, ENUM_Perspective | ENUM_Physics | ENUM_MouseControls | ENUM_WasdControls);
   GEN_COMP_DEFN_DEPN(Perspective, NONE);
   GEN_COMP_DEFN_DEPN(WasdControls, NONE);
   GEN_COMP_DEFN_DEPN(MouseControls, NONE);
@@ -90,18 +86,17 @@ namespace ecs {
   glm::vec3 Position::getVec(float alpha) {
     return glm::mix(lastVec, vec, alpha);
   }
-  LinearVel::LinearVel(glm::vec3 vec) : vec(vec) {}
   Scale::Scale(glm::vec3 vec) : vec(vec), lastVec(vec) { }
   ScalarMultFunc::ScalarMultFunc(Delegate<glm::vec3(const glm::vec3 &, uint32_t)> func) : multByFuncOfTime(func) { }
   Orientation::Orientation(glm::quat quat) : quat(quat), lastQuat(quat) {}
   glm::quat Orientation::getQuat(float alpha) {
     return glm::slerp(lastQuat, quat, alpha);
   }
-  AngularVel::AngularVel(glm::quat quat) : quat(quat) {}
   Perspective::Perspective(float fovy, float near, float far)
       : fovy(fovy), prevFovy(fovy), near(near), far(far) {}
   WasdControls::WasdControls(entityId orientationProxy, Style style) : orientationProxy(orientationProxy), style(style) { }
   MouseControls::MouseControls(bool invertedX, bool invertedY) : invertedX(invertedX), invertedY(invertedY) { }
+  Physics::Physics(float mass, void* geomData, Geometry geom) : geom(geom), mass(mass), geomInitData(geomData) { }
 
   /*
    * This macro defines these function:

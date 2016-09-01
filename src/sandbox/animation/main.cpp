@@ -211,7 +211,7 @@ class AnimationDemo : public Game {
 
 void main_loop(void *instance) {
   AnimationDemo *demo = (AnimationDemo *) instance;
-  float dt = demo->mainLoop(demo->systemsHandlerDlgt);
+  float dt = demo->mainLoop(demo->systemsHandlerDlgt, <#initializer#>);
   demo->tick(dt);
 }
 

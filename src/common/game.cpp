@@ -34,6 +34,8 @@
 
 #include "game.h"
 
+#define TIME_MULTIPLIER_MS 0.001f
+
 namespace ld2016 {
   Game::Game(int argc, char **argv, const char *windowTitle)
     : m_windowTitle(windowTitle), m_scene(nullptr),
@@ -41,12 +43,9 @@ namespace ld2016 {
   {
     m_lastTime = 0.0f;
 
-    // Initialize the graphics
-    m_initSdl();
-    m_initGl();
-
-    // Initialize the graphics scene
-    m_initScene();
+    if (! m_initSdl() || ! m_initGl() || ! m_initScene()) {
+      exit(EXIT_FAILURE);
+    }
   }
 
   Game::~Game() {
@@ -57,12 +56,12 @@ namespace ld2016 {
     // TODO: Free SDL resources
   }
 
-  void Game::m_initSdl() {
+  bool Game::m_initSdl() {
     // Initialize SDL
     if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO) != 0) {
       fprintf(stderr, "Failed to initialize SDL: %s\n",
           SDL_GetError());
-      exit(EXIT_FAILURE);
+      return false;
     }
     m_window = SDL_CreateWindow(
         m_windowTitle,  // title
@@ -74,33 +73,31 @@ namespace ld2016 {
     if (m_window == nullptr) {
       fprintf(stderr, "Failed to create SDL window: %s\n",
           SDL_GetError());
-      exit(EXIT_FAILURE);
+      return false;
     }
+    return true;
   }
 
-  void Game::m_initGl() {
+  bool Game::m_initGl() {
     // Create an OpenGL context for our window
     m_glContext = SDL_GL_CreateContext(m_window);
     if (m_glContext == nullptr) {
       fprintf(stderr, "Failed to initialize OpenGL context: %s\n",
           SDL_GetError());
-      exit(EXIT_FAILURE);
+      return false;
     }
-
     // Initialize GL entry points
     GLenum error = glewInit();
     if (error != GLEW_OK) {
       fprintf(stderr, "Failed to initialize GLEW: %s\n",
           glewGetErrorString(error));
-      exit(EXIT_FAILURE);
+      return false;
     }
-
     // Set vSync
     if (SDL_GL_SetSwapInterval(1) != 0) {
       fprintf(stderr, "Failed to enable VSync: %s\n", SDL_GetError());
-      // No need to exit
+      // TODO: decide whether or not to exit if VSync could not be set.
     }
-
     // Configure the GL
     glClearColor(0.0, 0.0, 0.0, 0.0);
     glClearDepth(1.0);
@@ -109,21 +106,21 @@ namespace ld2016 {
     glDisable(GL_CULL_FACE);
     glFrontFace(GL_CCW);
     glViewport(0, 0, m_width, m_height);
+    return true;
   }
 
-  void Game::m_initScene() {
+  bool Game::m_initScene() {
     m_scene = new Scene();
     m_scene->addObject(Debug::instance(state));
+    return true;
   }
 
-  float Game::mainLoop(ecs::Delegate<bool(SDL_Event&)>& systemsHandler) {
+  bool Game::mainLoop(ecs::Delegate<bool(SDL_Event &)> &systemsHandler, float &dtOut) {
     SDL_GL_SwapWindow(m_window);
-
     if (m_lastTime == 0.0f) {
-      // FIXME: The zero dt this causes might not be desirable.
-      m_lastTime = (float)SDL_GetTicks() * 0.001f;
+      // FIXME: Try to make sure this doesn't ever produce a dt of 0.
+      m_lastTime = (float)(std::min((Uint32)0, SDL_GetTicks() - 1)) * TIME_MULTIPLIER_MS;
     }
-
     // Check for SDL events (user input, etc.)
     SDL_Event event;
     while (SDL_PollEvent(&event)) {
@@ -146,16 +143,16 @@ namespace ld2016 {
           }
           break;
         case SDL_QUIT:
-          exit(EXIT_SUCCESS);
+          return false;
+        default:
+          break;
       }
     }
 
     // Calculate the time since the last frame was drawn
-    float currentTime = (float)SDL_GetTicks() * 0.001f;
+    float currentTime = (float)SDL_GetTicks() * TIME_MULTIPLIER_MS;
     float dt = currentTime - m_lastTime;
     m_lastTime = currentTime;
-    // Advance the scene simulation.
-//    m_scene->tick(dt);
 
     // Draw the window
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -168,6 +165,7 @@ namespace ld2016 {
       m_scene->draw(*m_camera, aspect);
     }
 
-    return dt;
+    dtOut = dt;
+    return true;
   }
 }

@@ -24,18 +24,31 @@
 #define LD2016_ECSSYSTEM_PHYSICS_H
 
 #include "ecsSystem.h"
+#include <btBulletDynamicsCommon.h>
 
+// TODO: figure out how to use bullet to simulate objects without collision components
 namespace ecs {
   class PhysicsSystem : public System<PhysicsSystem> {
       friend class System;
-      std::vector<compMask> requiredComponents = {ENUM_Position | ENUM_LinearVel,
-                                                  ENUM_Orientation | ENUM_AngularVel,
-                                                  ENUM_Physics
-      };
+      std::vector<compMask> requiredComponents = { ENUM_Physics, ENUM_Physics | ENUM_WasdControls };
+
+      /* Global physics data structures */
+      btDispatcher *dispatcher;
+      btBroadphaseInterface *broadphase;
+      btConstraintSolver *solver;
+      btCollisionConfiguration *collisionConfiguration;
+      btDynamicsWorld *dynamicsWorld;
+      btCollisionShape* planeShape;
+
+      btDefaultMotionState* groundMotionState;
+      btRigidBody* groundRigidBody;
     public:
       PhysicsSystem(State* state);
       bool onInit();
       void onTick(float dt);
+      void deInit();
+      bool onDiscover(const entityId& id);
+      bool onForget(const entityId& id);
   };
 }
 

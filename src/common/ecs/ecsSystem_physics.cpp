@@ -28,9 +28,111 @@ namespace ecs {
 
   }
   bool PhysicsSystem::onInit() {
+    registries[0].discoverHandler = DELEGATE(&PhysicsSystem::onDiscover, this);
+    registries[0].forgetHandler = DELEGATE(&PhysicsSystem::onForget, this);
+
+    broadphase = new btDbvtBroadphase();
+    collisionConfiguration = new btDefaultCollisionConfiguration();
+    dispatcher = new btCollisionDispatcher(collisionConfiguration);
+    solver = new btSequentialImpulseConstraintSolver();
+    dynamicsWorld = new btDiscreteDynamicsWorld(dispatcher, broadphase, solver, collisionConfiguration);
+    dynamicsWorld->setGravity(btVector3(0.0f, 0.0f, -9.81f));
+    planeShape = new btStaticPlaneShape(btVector3(0.f, 0.f, 1.f), 0.f);
+
+    //region Create ground
+    groundMotionState = new btDefaultMotionState(btTransform(
+        btQuaternion(0.f, 0.f, 0.f, 1.f),
+        btVector3(0.f, 0.f, 0.f)));
+    btRigidBody::btRigidBodyConstructionInfo groundRigidBodyCI(0, groundMotionState, planeShape, btVector3(0, 0, 0));
+    groundRigidBody = new btRigidBody(groundRigidBodyCI);
+    groundRigidBody->setRestitution(0.5f);
+    dynamicsWorld->addRigidBody(groundRigidBody);
+    //endregion
     return true;
   }
   void PhysicsSystem::onTick(float dt) {
+    for (auto id : registries[1].ids) {
+      WasdControls* wasdControls;
+      state->getWasdControls(id, &wasdControls);
+      Physics* physics;
+      state->getPhysics(id, &physics);
+      physics->rigidBody->applyCentralImpulse({wasdControls->accel.x, wasdControls->accel.y, wasdControls->accel.z});
+    }
+    dynamicsWorld->stepSimulation(dt); // time step (s), max sub-steps, sub-step length (s)
+    for (auto id : registries[0].ids) {
+      Physics* physics;
+      state->getPhysics(id, &physics);
+      btTransform currentTrans;
+      physics->rigidBody->getMotionState()->getWorldTransform(currentTrans);
+      Position* position;
+      state->getPosition(id, &position);
+      btVector3 currentPos = currentTrans.getOrigin();
+      position->vec = {currentPos.getX(), currentPos.getY(), currentPos.getZ()};
 
+      Orientation* orientation;
+      state->getOrientation(id, &orientation);
+      btQuaternion currentOr = currentTrans.getRotation();
+      orientation->quat = {currentOr.getX(), currentOr.getY(), currentOr.getZ(), currentOr.getW()};
+    }
+  }
+  void PhysicsSystem::deInit() {
+    for (auto id : registries[0].ids) {
+      state->deleteEntity(id); // onForget will be called for each id
+    }
+    //region Delete ground
+    dynamicsWorld->removeRigidBody(groundRigidBody);
+    delete groundRigidBody;
+    delete groundMotionState;
+    //endregion
+
+    delete planeShape;
+    delete dynamicsWorld;
+    delete solver;
+    delete dispatcher;
+    delete collisionConfiguration;
+    delete broadphase;
+  }
+  bool PhysicsSystem::onDiscover(const entityId &id) {
+    Position* position;
+    state->getPosition(id, &position);
+    Orientation* orientation;
+    state->getOrientation(id, &orientation);
+    Physics* physics;
+    state->getPhysics(id, &physics);
+    switch(physics->geom) {
+      case Physics::SPHERE:
+        physics->shape = new btSphereShape(*((float*)physics->geomInitData));
+        physics->geomInitData = nullptr;
+        break;
+      case Physics::PLANE:
+        assert("missing plane collision implementation" == nullptr);
+        break;
+      case Physics::MESH:
+        assert("missing mesh collision implementation" == nullptr);
+        break;
+      default:
+        break;
+    }
+    btDefaultMotionState* motionState =
+        new btDefaultMotionState(
+            btTransform(btQuaternion(
+                orientation->quat.x, orientation->quat.y, orientation->quat.z, orientation->quat.w),
+            btVector3(position->vec.x, position->vec.y, position->vec.z)));
+    btVector3 inertia(0.f, 0.f, 0.f);
+    physics->shape->calculateLocalInertia(physics->mass, inertia);
+    btRigidBody::btRigidBodyConstructionInfo ci(physics->mass, motionState, physics->shape, inertia);
+    physics->rigidBody = new btRigidBody(ci);
+    physics->rigidBody->setRestitution(0.8f);
+    dynamicsWorld->addRigidBody(physics->rigidBody);
+    return true;
+  }
+  bool PhysicsSystem::onForget(const entityId &id) {
+    Physics* physics;
+    state->getPhysics(id, &physics);
+    dynamicsWorld->removeRigidBody(physics->rigidBody);
+    delete physics->rigidBody->getMotionState();
+    delete physics->rigidBody;
+    delete physics->shape;
+    return true;
   }
 }

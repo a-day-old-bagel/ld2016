@@ -22,7 +22,7 @@
  * IN THE SOFTWARE.
  */
 
-#include <cstdlib>
+//#include <cstdlib>
 
 #ifdef __EMSCRIPTEN__
 #include <emscripten.h>
@@ -32,12 +32,13 @@
 #include "./common/game.h"
 #include "./common/meshObject.h"
 #include "./common/scene.h"
-#include "./common/wasdCamera.h"
+#include "./common/perspectiveCamera.h"
 #include "./common/skyBox.h"
 
 #include "./common/ecs/ecsHelpers.h"
 #include "./common/ecs/ecsSystem_movement.h"
 #include "./common/ecs/ecsSystem_controls.h"
+#include "./common/ecs/ecsSystem_physics.h"
 
 using namespace ld2016;
 using namespace ecs;
@@ -48,77 +49,67 @@ static glm::vec3 pyrFireWiggle(const glm::vec3& initialScale, uint32_t time) {
 
 class PyramidGame : public Game {
   private:
-    std::shared_ptr<WasdCamera> m_camera;
+    std::shared_ptr<PerspectiveCamera> m_camera;
     std::shared_ptr<MeshObject> m_pyrBottom, m_pyrTop, m_pyrThrusters, m_pyrFire;
     std::shared_ptr<SceneObject> m_camGimbal;
     std::shared_ptr<SkyBox> m_skyBox;
-    ControlSystem wasdSystem;
+    ControlSystem controlSystem;
     MovementSystem movementSystem;
+    PhysicsSystem physicsSystem;
   public:
     Delegate<bool(SDL_Event&)> systemsHandlerDlgt;
     PyramidGame(int argc, char **argv)
-        : Game(argc, argv, "Pyramid Game"), wasdSystem(&state), movementSystem(&state) {
+        : Game(argc, argv, "Pyramid Game"), controlSystem(&state), movementSystem(&state), physicsSystem(&state) {
       systemsHandlerDlgt = DELEGATE(&PyramidGame::systemsHandler, this);
     }
     EcsResult init() {
-      assert(wasdSystem.init());
+      assert(controlSystem.init());
       assert(movementSystem.init());
+      assert(physicsSystem.init());
 
       // Populate the graphics scene
-      m_camera = std::shared_ptr<WasdCamera>(
-          new WasdCamera( state,
-                          80.0f * ((float) M_PI / 180.0f),  // fovy
-                          0.1f,  // near
-                          1000.0f,  // far
-                          glm::vec3(0.0f, -4.f, 0.0f),  // position
-                          glm::angleAxis(
-                              (float) M_PI * 0.5f,
-                              glm::vec3(1.0f, 0.0f, 0.0f))
+      m_camera = std::shared_ptr<PerspectiveCamera> (
+          new PerspectiveCamera (
+              state,
+              80.0f * ((float) M_PI / 180.0f),  // fovy
+              0.1f,  // near
+              1000.0f,  // far
+              glm::vec3(0.0f, -4.f, 0.0f),  // position
+              glm::angleAxis(
+              (float) M_PI * 0.5f,
+              glm::vec3(1.0f, 0.0f, 0.0f))
           ));
-      m_pyrBottom = std::shared_ptr<MeshObject>(
-          new MeshObject(state, "assets/models/pyramid_bottom.dae", "assets/textures/pyramid_bottom.png"));
-      m_pyrTop = std::shared_ptr<MeshObject>(
+      m_pyrBottom = std::shared_ptr<MeshObject> (
+          new MeshObject(
+              state, "assets/models/pyramid_bottom.dae", "assets/textures/pyramid_bottom.png",
+              {0.f, 0.f, 10.f}));
+      m_pyrTop = std::shared_ptr<MeshObject> (
           new MeshObject(state, "assets/models/pyramid_top.dae", "assets/textures/pyramid_top.png"));
-      m_pyrThrusters = std::shared_ptr<MeshObject>(
+      m_pyrThrusters = std::shared_ptr<MeshObject> (
           new MeshObject(state, "assets/models/pyramid_thrusters.dae", "assets/textures/thrusters.png"));
-      m_pyrFire = std::shared_ptr<MeshObject>(
-          new MeshObject(state, "assets/models/pyramid_thruster_flames.dae", "assets/textures/pyramid_flames.png",
-                         {0.f, 0.f, -0.85f},
-                         glm::angleAxis((float) M_PI, glm::vec3(1.0f, 0.0f, 0.0f)),
-                         {0.105f, 0.105f, 0.25f}));
-      m_camGimbal = std::shared_ptr<SceneObject>(
+      m_pyrFire = std::shared_ptr<MeshObject> (
+          new MeshObject (
+              state, "assets/models/pyramid_thruster_flames.dae", "assets/textures/pyramid_flames.png",
+              {0.f, 0.f, -0.85f},
+              glm::angleAxis((float) M_PI, glm::vec3(1.0f, 0.0f, 0.0f)),
+              {0.105f, 0.105f, 0.25f}));
+      m_camGimbal = std::shared_ptr<SceneObject> (
           new SceneObject(state));
-      m_skyBox = std::shared_ptr<SkyBox>(
+      m_skyBox = std::shared_ptr<SkyBox> (
           new SkyBox(state));
       float delta = 0.3f;
       for (int i = 0; i < 100; ++i) {
-        Debug::drawLine( state,
-                         glm::vec3((float) i * delta, 0.0f, 0.0f),
-                         glm::vec3((float) i * delta, 1.0f, 0.0f),
-                         glm::vec3(1.0f, 0.0f, 1.0f));
-        Debug::drawLine( state,
-                         glm::vec3(0.0f, (float) i * delta, 0.0f),
-                         glm::vec3(1.0f, (float) i * delta, 0.0f),
-                         glm::vec3(1.0f, 0.0f, 1.0f));
+        Debug::drawLine (
+            state,
+            glm::vec3((float) i * delta, 0.0f, 0.0f),
+            glm::vec3((float) i * delta, 1.0f, 0.0f),
+            glm::vec3(1.0f, 0.0f, 1.0f));
+        Debug::drawLine (
+            state,
+            glm::vec3(0.0f, (float) i * delta, 0.0f),
+            glm::vec3(1.0f, (float) i * delta, 0.0f),
+            glm::vec3(1.0f, 0.0f, 1.0f));
       }
-
-      /*LoadResult loaded = m_skyBox->useCubeMap("sea", "png");
-      assert(loaded == LOAD_SUCCESS);
-      this->scene()->addObject(m_skyBox);
-
-      this->scene()->addObject(m_pyrBottom);
-      m_pyrBottom->addChild(m_pyrTop);
-      m_pyrBottom->addChild(m_pyrThrusters);
-      m_pyrBottom->addChild(m_pyrFire);
-
-      entityId fireId = m_pyrFire->getId();
-      state.addScalarMultFunc(fireId, DELEGATE_NOCLASS(pyrFireWiggle));
-
-      this->scene()->addObject(m_camera);
-      this->setCamera(m_camera);
-
-      entityId topId = m_pyrTop->getId();
-      state.addAngularVel(topId, glm::rotate(glm::quat(), 0.1f, {0.f, 0.f, 1.f}));*/
 
       this->scene()->addObject(m_pyrBottom);
       this->scene()->addObject(m_skyBox);
@@ -139,20 +130,16 @@ class PyramidGame : public Game {
       state.addMouseControls(gimbalId, false, false);
 
       entityId bottomId = m_pyrBottom->getId();
-      state.addLinearVel(bottomId, glm::vec3());
+      float sphereRadius = 0.8f;
+      state.addPhysics(bottomId, 1.f, &sphereRadius, Physics::SPHERE);
       state.addWasdControls(bottomId, gimbalId, WasdControls::ROTATE_ABOUT_Z);
 
-      entityId camId = m_camera->getId();
-      state.remWasdControls(camId);
-      state.remMouseControls(camId);
-      state.remLinearVel(camId);
-
       entityId topId = m_pyrTop->getId();
-      state.addAngularVel(topId, glm::rotate(glm::quat(), 0.1f, {0.f, 0.f, 1.f}));
 
       entityId fireId = m_pyrFire->getId();
       state.addScalarMultFunc(fireId, DELEGATE_NOCLASS(pyrFireWiggle));
 
+      //region VIRUS
       Debug::drawLine(state,
           glm::vec3(10 * delta, 0.f, 4.f),
           glm::vec3(11 * delta, 0.f, 2.f),
@@ -209,23 +196,30 @@ class PyramidGame : public Game {
           glm::vec3(19 * delta, 0.f, 2.6f),
           glm::vec3(18 * delta, 0.f, 2.f),
           glm::vec3(0.f, 1.f, 0.f));
+      //endregion
       return ECS_SUCCESS;
     }
+    void deInit() {
+      physicsSystem.deInit();
+    }
     bool systemsHandler(SDL_Event& event) {
-      return wasdSystem.handleEvent(event);
+      return controlSystem.handleEvent(event);
     }
     void tick(float dt) {
-      wasdSystem.tick(dt);
+      controlSystem.tick(dt);
       movementSystem.tick(dt);
+      physicsSystem.tick(dt);
     }
 };
 
-Uint8 *gameMusic[4];
-Uint32 gameMusicLength[4];
-
 void main_loop(void *instance) {
   PyramidGame *game = (PyramidGame *) instance;
-  float dt = game->mainLoop(game->systemsHandlerDlgt);
+  float dt;
+  bool keepGoing = game->mainLoop(game->systemsHandlerDlgt, dt);
+  if (!keepGoing) {
+    game->deInit();
+    exit(0);
+  }
   game->tick(dt);
 }
 
@@ -234,6 +228,10 @@ int main(int argc, char **argv) {
   EcsResult status = game.init();
   if (status.isError()) { fprintf(stderr, "%s", status.toString().c_str()); }
 
+  //region Sound
+  /*
+  Uint8 *gameMusic[4];
+  Uint32 gameMusicLength[4];
   int count = SDL_GetNumAudioDevices(0);
   fprintf(stderr, "Number of audio devices: %d\n", count);
   for (int i = 0; i < count; ++i) {
@@ -291,17 +289,15 @@ int main(int argc, char **argv) {
           gameMusicLength[i]);
     }
     SDL_PauseAudioDevice(dev, 0);  // start audio
-  }
+  }*/
+  //endregion
 
 #ifdef __EMSCRIPTEN__
     emscripten_set_main_loop_arg(main_loop, (void*)&game, 0, 1);
 #else
-    while (1) {
+    while (true) {
       main_loop(&game);
-      // TODO: Wait for VSync? Or should we poll input faster than that?
     }
 #endif
 
-
-  return EXIT_SUCCESS;
 }

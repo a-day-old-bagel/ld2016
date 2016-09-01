@@ -29,9 +29,7 @@ namespace ld2016 {
                          const glm::vec3 &position, const glm::quat &orientation)
       : PerspectiveCamera(state, fovy, near, far, position, orientation)
   {
-    ecs::CompOpReturn status = state.addLinearVel(id, {0.f, 0.f, 0.f});
-    assert(status == ecs::SUCCESS);
-    status = state.addMouseControls(id, false, false);
+    ecs::CompOpReturn status = state.addMouseControls(id, false, false);
     assert(status == ecs::SUCCESS);
     status = state.addWasdControls(id, 0, ecs::WasdControls::ROTATE_ALL_AXES);
     assert(status == ecs::SUCCESS);

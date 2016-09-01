@@ -28,7 +28,7 @@ namespace ecs {
     entityId id;
     if (freedIds.empty()) {
       if (nextId == std::numeric_limits<entityId>::max() || ++nextId == std::numeric_limits<entityId>::max()) {
-        *newId = 0;
+        *newId = 0; // ID 0 is not a valid id - ids start at 1. TODO: should check for id 0 in other calls?
         return MAX_ID_REACHED;
       }
       id = nextId;
@@ -46,21 +46,19 @@ namespace ecs {
     Existence* existence;
     CompOpReturn status = getExistence(id, &existence);
     if (status != SUCCESS) {
-      return status;
+      return NONEXISTENT_ENT; // only fail status possible here indicates no existence component, hence no entity.
     }
     GEN_CLEAR_ENT_LOOP_DEFN(ALL_COMPS)
     return SUCCESS;
   }
 
   CompOpReturn State::deleteEntity(const entityId& id) {
-    CompOpReturn status = clearEntity(id);
+    Existence* existence;
+    CompOpReturn status = getExistence(id, &existence);
     if (status != SUCCESS) {
-      return status;
+      return NONEXISTENT_ENT; // only fail status possible here indicates no existence component, hence no entity.
     }
-    status = remExistence(id);
-    if (status != SUCCESS) {
-      return status;
-    }
+    GEN_DEL_ENT_LOOP_DEFN(ALL_COMPS)
     freedIds.push(id);
     return SUCCESS;
   }

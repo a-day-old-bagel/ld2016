@@ -131,11 +131,30 @@
                             compMask getDependentComps(int compType) { switch(compType) { \
                             DO_FOR_EACH(_GEN_COMP_CASE_DEPN, __VA_ARGS__) default: return ALL; } }
 
-#define _GEN_CLEAR_ENT(comp, i) if (ENUM_##comp != ENUM_Existence && existence->flagIsOn(ENUM_##comp)) { \
-                                  if (comps_##comp.count(id)) { \
-                                    comps_##comp.erase(id); \
-                                  } existence->turnOffFlags(ENUM_##comp); }
+#define _GEN_CLEAR_ENT(comp, i) \
+if (ENUM_##comp != ENUM_Existence) { \
+  if (existence->flagIsOn(ENUM_##comp)) { \
+    existence->turnOffFlags(ENUM_##comp); \
+    for (auto dlgt : remCallbacks_##comp) { \
+      if ((comps_Existence.at(id).componentsPresent & dlgt.likeness) != dlgt.likeness) { \
+        dlgt.dlgt(id, dlgt.data); \
+      } \
+    } \
+  } \
+  if (comps_##comp.count(id)) { \
+    comps_##comp.erase(id); \
+  } \
+}
 #define GEN_CLEAR_ENT_LOOP_DEFN(...) DO_FOR_EACH(_GEN_CLEAR_ENT, __VA_ARGS__)
+
+#define _GEN_DEL_ENT(comp, i) \
+for (auto dlgt : remCallbacks_##comp) { /* give that id to all removal delegates no matter what */\
+  dlgt.dlgt(id, dlgt.data); \
+} \
+if (comps_##comp.count(id)) { /* delete all component data for that id if it exists */\
+  comps_##comp.erase(id); \
+}
+#define GEN_DEL_ENT_LOOP_DEFN(...) DO_FOR_EACH(_GEN_DEL_ENT, __VA_ARGS__)
 
 #define _GEN_LISTEN_FOR_LIKE_ENTITIES_INTERNALS(comp, i) \
   if(likeness & ENUM_##comp) { \
@@ -150,11 +169,6 @@
 #define _GEN_ARG_NAME_TYPED(type, i) , type arg##i
 #define GEN_ARG_NAMES_TYPED(...) DO_FOR_EACH(_GEN_ARG_NAME_TYPED, ##__VA_ARGS__)
 
-/*#define COMP_COLL_DECL_NOARGS(comp) \
-        KvMap<entityId, comp> comps_##comp;\
-        CompOpReturn add##comp(const entityId id);\
-        CompOpReturn rem##comp(const entityId id);\
-        CompOpReturn get##comp(const entityId id, comp** out);*/
 #define _COMP_COLL_DECL(comp, ...) \
         private: \
         KvMap<entityId, comp> comps_##comp; \
@@ -169,10 +183,6 @@
 
 #define GEN_COMP_COLL_DECL(comp) _COMP_COLL_DECL(comp, SIG_##comp)
 
-/*#define _COMP_COLL_DEFN_NOARGS(comp) \
-        CompOpReturn State::add##comp(const entityId id) { addComp(comps_##comp, id); }\
-        CompOpReturn State::rem##comp(const entityId id) { remComp(comps_##comp, id, ENUM_##comp); }\
-        CompOpReturn State::get##comp(const entityId id, comp** out) { getComp(comps_##comp, id, out); }*/
 #define _COMP_COLL_DEFN(comp, ...) \
   CompOpReturn State::add##comp(const entityId& id GEN_ARG_NAMES_TYPED(__VA_ARGS__)) \
                               { return addComp(comps_##comp, id, addCallbacks_##comp GEN_ARG_NAMES(__VA_ARGS__)); }\

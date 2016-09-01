@@ -106,7 +106,7 @@ class EcsDemo : public Game {
 
 void main_loop(void *instance) {
   EcsDemo *demo = (EcsDemo *) instance;
-  float dt = demo->mainLoop(demo->systemsHandlerDlgt);
+  float dt = demo->mainLoop(demo->systemsHandlerDlgt, <#initializer#>);
   demo->tick(dt);
 }
 

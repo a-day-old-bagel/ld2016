@@ -43,9 +43,9 @@ namespace ld2016 {
       std::shared_ptr<Camera> m_camera;
       float m_lastTime;
 
-      void m_initSdl();
-      void m_initGl();
-      void m_initScene();
+      bool m_initSdl();
+      bool m_initGl();
+      bool m_initScene();
     protected:
       ecs::State state;
 
@@ -64,7 +64,7 @@ namespace ld2016 {
         return false;
       }
 
-      float mainLoop(ecs::Delegate<bool(SDL_Event&)>& systemsHandler);
+      bool mainLoop(ecs::Delegate<bool(SDL_Event &)> &systemsHandler, float &dtOut);
   };
 }
 

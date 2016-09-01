@@ -30,6 +30,18 @@
 
 namespace ecs {
 
+  typedef Delegate<bool(const entityId& id)> entNotifyHandler;
+  static bool doNothing(const entityId&) { return true; }
+
+  struct IdRegistry {
+    std::vector<entityId> ids;
+    entNotifyHandler discoverHandler;
+    entNotifyHandler forgetHandler;
+    IdRegistry(entNotifyHandler&& discoverHandler = DELEGATE_NOCLASS(doNothing),
+               entNotifyHandler&& forgetHandler   = DELEGATE_NOCLASS(doNothing))
+               : discoverHandler(discoverHandler), forgetHandler(forgetHandler) { }
+  };
+
   template<typename Derived_System>
   class System
   {
@@ -39,7 +51,7 @@ namespace ecs {
 
     protected:
       State* state;
-      std::vector<std::vector<entityId>> registeredIDs;
+      std::vector<IdRegistry> registries;
 
     public:
       System(State* state);
@@ -59,27 +71,28 @@ namespace ecs {
     return *static_cast<Derived_System*>(this);
   }
   static void discover(const entityId& id, void* data) {
-    std::vector<entityId>* registry = (std::vector<entityId>*)data;
-    registry->push_back(id);
-//    printf("DISCOVERED: %u\n", id);
+    IdRegistry* registry = reinterpret_cast<IdRegistry*>(data);
+    if (registry->discoverHandler(id)) {
+      registry->ids.push_back(id);
+    }
   }
   static void forget(const entityId& id, void* data) {
-    std::vector<entityId>* registry = (std::vector<entityId>*)data;
-    std::vector<entityId>::iterator position = std::find(registry->begin(),
-                                                         registry->end(), id);
-    if (position != registry->end()) {
-      registry->erase(position);
-//      printf("FORGOT: %u\n", id);
+    IdRegistry* registry = reinterpret_cast<IdRegistry*>(data);
+    std::vector<entityId>::iterator position = std::find(registry->ids.begin(), registry->ids.end(), id);
+    if (position != registry->ids.end()) {
+      if (registry->forgetHandler(id)) {
+        registry->ids.erase(position);
+      }
     }
   }
   template<typename Derived_System>
   bool System<Derived_System>::init() {
-    registeredIDs.resize(sys().requiredComponents.size());
+    registries.resize(sys().requiredComponents.size());
     for (int i = 0; i < sys().requiredComponents.size(); i++) {
-      registeredIDs.push_back(std::vector<entityId>());
-      state->listenForLikeEntities(sys().requiredComponents[i],
-        EntNotifyDelegate{ DELEGATE_NOCLASS(discover), sys().requiredComponents[i], &registeredIDs[i] },
-        EntNotifyDelegate{ DELEGATE_NOCLASS(forget), sys().requiredComponents[i], &registeredIDs[i] }
+      state->listenForLikeEntities(
+           sys().requiredComponents[i],
+           EntNotifyDelegate{ DELEGATE_NOCLASS(discover), sys().requiredComponents[i], &registries[i] },
+           EntNotifyDelegate{ DELEGATE_NOCLASS(forget), sys().requiredComponents[i], &registries[i] }
       );
     }
     return sys().onInit();
@@ -103,8 +116,8 @@ namespace ecs {
   template<typename Derived_System>
   void System<Derived_System>::clean(){
     sys().onClean();
-    for (auto registry : registeredIDs) {
-      registry.clear();
+    for (auto registry : registries) {
+      registry.ids.clear();
     }
   }
   template<typename Derived_System>

@@ -28,6 +28,10 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/quaternion.hpp>
 
+class btCollisionShape;
+class btDefaultMotionState;
+class btRigidBody;
+
 namespace ecs {
 
   typedef uint32_t compMask;
@@ -60,11 +64,6 @@ namespace ecs {
     Position(glm::vec3 vec);
     glm::vec3 getVec(float alpha);
   };
-  #define SIG_LinearVel glm::vec3
-  struct LinearVel : public Component<LinearVel> {
-    glm::vec3 vec;
-    LinearVel(glm::vec3 vec);
-  };
   #define SIG_Scale glm::vec3
   struct Scale : public Component<Scale> {
     glm::vec3 vec, lastVec;
@@ -80,11 +79,6 @@ namespace ecs {
     glm::quat quat, lastQuat;
     Orientation(glm::quat quat);
     glm::quat getQuat(float alpha);
-  };
-  #define SIG_AngularVel glm::quat
-  struct AngularVel : public Component<AngularVel> {
-    glm::quat quat;
-    AngularVel(glm::quat quat);
   };
   #define SIG_Perspective float, float, float
   struct Perspective : public Component<Perspective> {
@@ -107,9 +101,17 @@ namespace ecs {
     bool invertedX, invertedY;
     MouseControls(bool invertedX, bool invertedY);
   };
-  #define SIG_Physics
+  #define SIG_Physics float, void*, Physics::Geometry
   struct Physics : public Component<Physics> {
-
+    enum Geometry {
+      NONE, PLANE, SPHERE, MESH
+    };
+    int geom;
+    float mass;
+    btCollisionShape* shape;
+    btRigidBody* rigidBody;
+    void* geomInitData;
+    Physics(float mass, void* geomData, Geometry geom);
   };
 
   /*
@@ -119,11 +121,9 @@ namespace ecs {
   #define ALL_COMPS \
     Existence,      \
     Position,       \
-    LinearVel,      \
     Scale,          \
     ScalarMultFunc, \
     Orientation,    \
-    AngularVel,     \
     Perspective,    \
     WasdControls,   \
     MouseControls,  \
@@ -132,11 +132,9 @@ namespace ecs {
   #define GEN_COLL_DECLS \
     GEN_COMP_COLL_DECL(Existence)     \
     GEN_COMP_COLL_DECL(Position)      \
-    GEN_COMP_COLL_DECL(LinearVel)     \
     GEN_COMP_COLL_DECL(Scale)         \
     GEN_COMP_COLL_DECL(ScalarMultFunc)\
     GEN_COMP_COLL_DECL(Orientation)   \
-    GEN_COMP_COLL_DECL(AngularVel)    \
     GEN_COMP_COLL_DECL(Perspective)   \
     GEN_COMP_COLL_DECL(WasdControls)  \
     GEN_COMP_COLL_DECL(MouseControls) \
@@ -145,11 +143,9 @@ namespace ecs {
   #define GEN_COLL_DEFNS \
     GEN_COMP_COLL_DEFN(Existence)     \
     GEN_COMP_COLL_DEFN(Position)      \
-    GEN_COMP_COLL_DEFN(LinearVel)     \
     GEN_COMP_COLL_DEFN(Scale)         \
     GEN_COMP_COLL_DEFN(ScalarMultFunc)\
     GEN_COMP_COLL_DEFN(Orientation)   \
-    GEN_COMP_COLL_DEFN(AngularVel)    \
     GEN_COMP_COLL_DEFN(Perspective)   \
     GEN_COMP_COLL_DEFN(WasdControls)  \
     GEN_COMP_COLL_DEFN(MouseControls) \

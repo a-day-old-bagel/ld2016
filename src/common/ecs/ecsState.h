@@ -61,6 +61,7 @@ namespace ecs {
    * components themselves. Entities per se only exist as associations between components that share the same ID.
    */
   class State {
+      // TODO: add methods to add components by copy: add[component_name](component_name& copyThis)
       /**
        * GEN_COLL_DECLS is defined in ecsComponents.h and simply wraps calls to the COMP_COLL_DECL macro.
        * The COMP_COLL_DECL (Component Collection Declaration) macros DECLARE collections of each type of component,

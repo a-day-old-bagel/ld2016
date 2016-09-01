@@ -31,7 +31,7 @@ namespace ecs {
       friend class System;
       std::vector<compMask> requiredComponents = {
           ENUM_Orientation | ENUM_MouseControls,
-          ENUM_LinearVel | ENUM_Orientation | ENUM_WasdControls
+          ENUM_Orientation | ENUM_WasdControls
       };
       std::vector<SDL_Event> queuedEvents;
     public:

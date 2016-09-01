@@ -32,26 +32,7 @@ namespace ecs {
     return true;
   }
   void MovementSystem::onTick(float dt) {
-    for (auto id : registeredIDs[0]) {
-      Position* posComp;
-      state->getPosition(id, &posComp);
-      LinearVel* velComp;
-      state->getLinearVel(id, &velComp);
-      posComp->vec += dt * velComp->vec;
-    }
-    for (auto id : registeredIDs[1]) {
-      Orientation* oriComp;
-      state->getOrientation(id, &oriComp);
-      AngularVel* velComp;
-      state->getAngularVel(id, &velComp);
-      glm::quat noRotation = glm::angleAxis(0.f, glm::vec3(0.f, 0.f, 1.f));
-      /*float partOfRotation = 1000 / dt;
-      if (partOfRotation == 0.f) { continue; }
-      oriComp->quat *= glm::slerp(noRotation, velComp->quat, partOfRotation);*/
-      oriComp->quat *= velComp->quat;
-      // FIXME: This may be causing things to occasionally disappear??? Or is it something else?
-    }
-    for (auto id : registeredIDs[2]) {
+    for (auto id : registries[0].ids) {
       Scale* scale;
       state->getScale(id, &scale);
       ScalarMultFunc* scalarMultFunc;
