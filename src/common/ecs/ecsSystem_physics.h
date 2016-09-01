@@ -30,8 +30,10 @@
 namespace ecs {
   class PhysicsSystem : public System<PhysicsSystem> {
       friend class System;
-      std::vector<compMask> requiredComponents = { ENUM_Physics, ENUM_Physics | ENUM_WasdControls };
-
+      std::vector<compMask> requiredComponents = {
+          ENUM_Physics,
+          ENUM_Physics | ENUM_WasdControls
+      };
       /* Global physics data structures */
       btDispatcher *dispatcher;
       btBroadphaseInterface *broadphase;

@@ -46,6 +46,7 @@ namespace ecs {
     btRigidBody::btRigidBodyConstructionInfo groundRigidBodyCI(0, groundMotionState, planeShape, btVector3(0, 0, 0));
     groundRigidBody = new btRigidBody(groundRigidBodyCI);
     groundRigidBody->setRestitution(0.5f);
+    groundRigidBody->setFriction(1.f);
     dynamicsWorld->addRigidBody(groundRigidBody);
     //endregion
     return true;
@@ -56,7 +57,7 @@ namespace ecs {
       state->getWasdControls(id, &wasdControls);
       Physics* physics;
       state->getPhysics(id, &physics);
-      physics->rigidBody->applyCentralImpulse({wasdControls->accel.x, wasdControls->accel.y, wasdControls->accel.z});
+      physics->rigidBody->applyCentralImpulse({-wasdControls->accel.x, -wasdControls->accel.y, wasdControls->accel.z});
     }
     dynamicsWorld->stepSimulation(dt); // time step (s), max sub-steps, sub-step length (s)
     for (auto id : registries[0].ids) {
@@ -102,17 +103,19 @@ namespace ecs {
     switch(physics->geom) {
       case Physics::SPHERE:
         physics->shape = new btSphereShape(*((float*)physics->geomInitData));
-        physics->geomInitData = nullptr;
         break;
       case Physics::PLANE:
         assert("missing plane collision implementation" == nullptr);
         break;
-      case Physics::MESH:
-        assert("missing mesh collision implementation" == nullptr);
+      case Physics::MESH: {
+          std::vector<float> *points = (std::vector<float> *) physics->geomInitData;
+          physics->shape = new btConvexHullShape(points->data(), (int) points->size());
+        }
         break;
       default:
         break;
     }
+    physics->geomInitData = nullptr;
     btDefaultMotionState* motionState =
         new btDefaultMotionState(
             btTransform(btQuaternion(
@@ -123,6 +126,7 @@ namespace ecs {
     btRigidBody::btRigidBodyConstructionInfo ci(physics->mass, motionState, physics->shape, inertia);
     physics->rigidBody = new btRigidBody(ci);
     physics->rigidBody->setRestitution(0.8f);
+    physics->rigidBody->setFriction(1.f);
     dynamicsWorld->addRigidBody(physics->rigidBody);
     return true;
   }

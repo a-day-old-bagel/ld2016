@@ -82,7 +82,7 @@ class PyramidGame : public Game {
       m_pyrBottom = std::shared_ptr<MeshObject> (
           new MeshObject(
               state, "assets/models/pyramid_bottom.dae", "assets/textures/pyramid_bottom.png",
-              {0.f, 0.f, 10.f}));
+              {0.f, 0.f, 100.f}));
       m_pyrTop = std::shared_ptr<MeshObject> (
           new MeshObject(state, "assets/models/pyramid_top.dae", "assets/textures/pyramid_top.png"));
       m_pyrThrusters = std::shared_ptr<MeshObject> (
@@ -130,9 +130,28 @@ class PyramidGame : public Game {
       state.addMouseControls(gimbalId, false, false);
 
       entityId bottomId = m_pyrBottom->getId();
-      float sphereRadius = 0.8f;
-      state.addPhysics(bottomId, 1.f, &sphereRadius, Physics::SPHERE);
+//      float sphereRadius = 0.8f;
+//      state.addPhysics(bottomId, 1.f, &sphereRadius, Physics::SPHERE);
+      std::vector<float> hullVerts = {
+          /*{ 0.f,  0.f, -0.2f},
+          {-.2f, -.2f, 0.f},
+          {-.2f,  .2f, 0.f},
+          { .2f, -.2f, 0.f},
+          { .2f,  .2f, 0.f}*/
+           1.f,  0.f,  0.f,
+           0.f,  1.f,  0.f,
+           0.f,  0.f,  1.f,
+          -1.f,  0.f,  0.f,
+           0.f, -1.f,  0.f,
+           0.f,  0.f, -1.f
+      };
+      state.addPhysics(bottomId, 1.f, &hullVerts, Physics::MESH);
       state.addWasdControls(bottomId, gimbalId, WasdControls::ROTATE_ABOUT_Z);
+
+      Physics* physics;
+      state.getPhysics(bottomId, &physics);
+      physics->rigidBody->setActivationState(DISABLE_DEACTIVATION);
+      physics->rigidBody->applyTorqueImpulse({0.f, 10.f, 0.f});
 
       entityId topId = m_pyrTop->getId();
 
