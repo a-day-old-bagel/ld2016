@@ -130,14 +130,15 @@ class PyramidGame : public Game {
       state.addMouseControls(gimbalId, false, false);
 
       entityId bottomId = m_pyrBottom->getId();
-//      float sphereRadius = 0.8f;
-//      state.addPhysics(bottomId, 1.f, &sphereRadius, Physics::SPHERE);
-      std::vector<float> hullVerts = {
-          /*{ 0.f,  0.f, -0.2f},
+      state.addWasdControls(bottomId, gimbalId, WasdControls::ROTATE_ABOUT_Z);
+      float sphereRadius = 0.8f;
+      state.addPhysics(bottomId, 1.f, &sphereRadius, Physics::SPHERE);
+      /*std::vector<float> hullVerts = {
+          *//*{ 0.f,  0.f, -0.2f},
           {-.2f, -.2f, 0.f},
           {-.2f,  .2f, 0.f},
           { .2f, -.2f, 0.f},
-          { .2f,  .2f, 0.f}*/
+          { .2f,  .2f, 0.f}*//*
            1.f,  0.f,  0.f,
            0.f,  1.f,  0.f,
            0.f,  0.f,  1.f,
@@ -145,13 +146,11 @@ class PyramidGame : public Game {
            0.f, -1.f,  0.f,
            0.f,  0.f, -1.f
       };
-      state.addPhysics(bottomId, 1.f, &hullVerts, Physics::MESH);
-      state.addWasdControls(bottomId, gimbalId, WasdControls::ROTATE_ABOUT_Z);
+      state.addPhysics(bottomId, 1.f, &hullVerts, Physics::MESH);*/
 
       Physics* physics;
       state.getPhysics(bottomId, &physics);
       physics->rigidBody->setActivationState(DISABLE_DEACTIVATION);
-      physics->rigidBody->applyTorqueImpulse({0.f, 10.f, 0.f});
 
       entityId topId = m_pyrTop->getId();
 
