@@ -87,7 +87,8 @@ void audioCallback(
 
 void main_loop(void *instance) {
   AudioDemo *demo = (AudioDemo *) instance;
-  float dt = demo->mainLoop(demo->systemsHandlerDlgt, <#initializer#>);
+  float dt;
+  demo->mainLoop(demo->systemsHandlerDlgt, dt);
   demo->tick(dt);
 }
 

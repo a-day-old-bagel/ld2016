@@ -87,9 +87,7 @@ class EcsDemo : public Game {
 
       entityId meshId = m_mesh->getId();
       state.addPosition(meshId, {0.f, 0.f, -2.f});
-      state.addLinearVel(meshId, {0.f, 0.f, 0.0000001f});
       state.addOrientation(meshId, glm::quat());
-      state.addAngularVel(meshId, glm::rotate(glm::quat(), 0.1f, {0.f, 0.f, 1.f}));
 
       return ECS_SUCCESS;
     }
@@ -106,7 +104,8 @@ class EcsDemo : public Game {
 
 void main_loop(void *instance) {
   EcsDemo *demo = (EcsDemo *) instance;
-  float dt = demo->mainLoop(demo->systemsHandlerDlgt, <#initializer#>);
+  float dt;
+  demo->mainLoop(demo->systemsHandlerDlgt, dt);
   demo->tick(dt);
 }
 

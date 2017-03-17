@@ -11,6 +11,7 @@
 
 # clion files
 /.idea
+/cmake-build*
 
 # visual studio
 /build-msvs

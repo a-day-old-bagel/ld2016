@@ -128,16 +128,13 @@ class AnimationDemo : public Game {
       state.addMouseControls(gimbalId, false, false);
 
       entityId bottomId = m_pyrBottom->getId();
-      state.addLinearVel(bottomId, glm::vec3());
       state.addWasdControls(bottomId, gimbalId, WasdControls::ROTATE_ABOUT_Z);
 
       entityId camId = m_camera->getId();
       state.remWasdControls(camId);
       state.remMouseControls(camId);
-      state.remLinearVel(camId);
 
       entityId topId = m_pyrTop->getId();
-      state.addAngularVel(topId, glm::rotate(glm::quat(), 0.1f, {0.f, 0.f, 1.f}));
 
       entityId fireId = m_pyrFire->getId();
       state.addScalarMultFunc(fireId, DELEGATE_NOCLASS(pyrFireWiggle));
@@ -211,7 +208,8 @@ class AnimationDemo : public Game {
 
 void main_loop(void *instance) {
   AnimationDemo *demo = (AnimationDemo *) instance;
-  float dt = demo->mainLoop(demo->systemsHandlerDlgt, <#initializer#>);
+  float dt;
+  demo->mainLoop(demo->systemsHandlerDlgt, dt);
   demo->tick(dt);
 }
 

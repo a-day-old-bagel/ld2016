@@ -11,8 +11,8 @@ option(EMSCRIPTEN_ENABLED "Build using Emscripten" OFF)
 if(DEFINED ENV{EMSCRIPTEN} AND EMSCRIPTEN_ENABLED)
   if(CMAKE_BUILD_TYPE MATCHES debug)
     set(EMSCRIPTEN_FLAGS
-        "-O1"
-        "-s ASSERTIONS=2"
+        "-Oz"
+#        "-s ASSERTIONS=2"
         "-s SAFE_HEAP=1"
         "-s STACK_OVERFLOW_CHECK=2"
         "-s DISABLE_EXCEPTION_CATCHING=0"
@@ -24,7 +24,7 @@ if(DEFINED ENV{EMSCRIPTEN} AND EMSCRIPTEN_ENABLED)
     set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${EMSCRIPTEN_FLAGS}")
   elseif(CMAKE_BUILD_TYPE MATCHES release)
     set(EMSCRIPTEN_FLAGS
-        "-O2"
+        "-O3"
         "-s ASSERTIONS=0"
         "-s SAFE_HEAP=0"
         "-s STACK_OVERFLOW_CHECK=0"
@@ -46,17 +46,20 @@ if(DEFINED ENV{EMSCRIPTEN} AND EMSCRIPTEN_ENABLED)
   # include directories so that we can include the header-only GLM library
   set(CMAKE_FIND_ROOT_PATH_MODE_INCLUDE BOTH)
 
-  # GLM Mathematics Library
-  #find_package(GLM REQUIRED)
-
   set(CMAKE_FIND_ROOT_PATH_MODE_INCLUDE ONLY)
 
   # Asset Import library for loading meshes
   set(ASSIMP_LIBRARIES "${CMAKE_SOURCE_DIR}/extern/assimp-install-js/lib/libassimp.so")
-  include_directories(SYSTEM
-      ./extern/assimp-install-js/include/
-      ./extern/glm/
-      )
+  include_directories( SYSTEM ./extern/assimp-install-js/include/ )
+
+  # Bullet physics libary
+  set(BULLET_LIBRARIES "${CMAKE_SOURCE_DIR}/extern/bullet3/install-js/lib/libbullet.so")
+  include_directories( SYSTEM ${CMAKE_SOURCE_DIR}/extern/bullet3/install-js/include/ )
+  include_directories( SYSTEM ${CMAKE_SOURCE_DIR}/extern/bullet3/src)
+
+  # GLM - Graphics Library Math
+  include_directories( SYSTEM ./extern/glm/ )
+
 else()
   find_package( Bullet REQUIRED )
   include_directories( SYSTEM ${BULLET_INCLUDE_DIRS} )
@@ -80,6 +83,6 @@ else()
     message(STATUS "dir='${dir}'")
   endforeach()
 endif()
-include_directories( SYSTEM extern/stb_image)
+include_directories( SYSTEM extern/stb)
 
 add_subdirectory("./src")

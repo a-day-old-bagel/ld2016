@@ -247,7 +247,6 @@ int main(int argc, char **argv) {
   if (status.isError()) { fprintf(stderr, "%s", status.toString().c_str()); }
 
   //region Sound
-  /*
   Uint8 *gameMusic[4];
   Uint32 gameMusicLength[4];
   int count = SDL_GetNumAudioDevices(0);
@@ -307,7 +306,7 @@ int main(int argc, char **argv) {
           gameMusicLength[i]);
     }
     SDL_PauseAudioDevice(dev, 0);  // start audio
-  }*/
+  }
   //endregion
 
 #ifdef __EMSCRIPTEN__
