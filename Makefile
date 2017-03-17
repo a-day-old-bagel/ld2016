@@ -14,7 +14,7 @@ build: assimp bullet
 	&& make -j $(num_threads)
 
 .PHONY: build-html
-build-html: assimp-js
+build-html: assimp-js bullet-js
 	mkdir -p build-html install-html \
 	&& cd build-html \
 	&& emconfigure cmake \
@@ -52,45 +52,51 @@ assimp-js:
 
 .PHONY: bullet
 bullet:
-	cd extern/bullet3 \
-	&& mkdir -p build install \
-	&& cd build \
+	cd extern \
+	&& mkdir -p bullet3-build bullet3-install \
+	&& cd bullet3-build \
 	&& cmake \
 		-DCMAKE_BUILD_TYPE=debug \
 		-DBUILD_DEMOS=OFF \
 		-DBUILD_UNIT_TESTS=OFF \
-		-DCMAKE_INSTALL_PREFIX=../install \
-		.. \
+		-DBUILD_CPU_DEMOS=OFF \
+		-DBUILD_BULLET2_DEMOS=OFF \
+		-DBUILD_EXTRAS=OFF \
+		-DCMAKE_INSTALL_PREFIX=../bullet3-install \
+		../bullet3 \
 	&& make -j $(num_threads) \
 	&& make install
 
 .PHONY: bullet-js
 bullet-js:
-	cd extern/bullet3 \
-	&& mkdir -p build-js install-js \
-	&& cd build-js \
+	cd extern \
+	&& mkdir -p bullet3-build-js bullet3-install-js \
+	&& cd bullet3-build-js \
 	&& emconfigure cmake \
 		-DCMAKE_BUILD_TYPE=debug \
 		-DBUILD_DEMOS=OFF \
 		-DBUILD_UNIT_TESTS=OFF \
-		-DCMAKE_INSTALL_PREFIX=../install-js \
-		.. \
+		-DBUILD_CPU_DEMOS=OFF \
+		-DBUILD_BULLET2_DEMOS=OFF \
+		-DBUILD_EXTRAS=OFF \
+		-DCMAKE_INSTALL_PREFIX=../bullet3-install-js \
+		../bullet3 \
 	&& emmake make -j $(num_threads) \
 	&& emmake make install
 
-.PHONY: lcms-js
-lcms-js:
-	cd extern/bullet3 \
-	&& mkdir -p build-js install-js \
-	&& cd build-js \
-	&& emconfigure cmake \
-		-DCMAKE_BUILD_TYPE=debug \
-		-DBUILD_DEMOS=OFF \
-		-DBUILD_UNIT_TESTS=OFF \
-		-DCMAKE_INSTALL_PREFIX=../install-js \
-		.. \
-	&& emmake make -j $(num_threads) \
-	&& emmake make install
+# .PHONY: lcms-js
+# lcms-js:
+# 	cd extern/bullet3 \
+# 	&& mkdir -p build-js install-js \
+# 	&& cd build-js \
+# 	&& emconfigure cmake \
+# 		-DCMAKE_BUILD_TYPE=debug \
+# 		-DBUILD_DEMOS=OFF \
+# 		-DBUILD_UNIT_TESTS=OFF \
+# 		-DCMAKE_INSTALL_PREFIX=../install-js \
+# 		.. \
+# 	&& emmake make -j $(num_threads) \
+# 	&& emmake make install
 
 .PHONY: clean
 clean:

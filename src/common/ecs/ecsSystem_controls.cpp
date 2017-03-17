@@ -21,6 +21,8 @@
  * IN THE SOFTWARE.
  */
 #include "ecsSystem_controls.h"
+
+#define GLM_ENABLE_EXPERIMENTAL
 #include "glm/gtx/transform.hpp"
 #include "glm/gtx/matrix_decompose.hpp"
 
