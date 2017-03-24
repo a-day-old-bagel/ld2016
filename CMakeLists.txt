@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.3)
+﻿cmake_minimum_required(VERSION 3.3)
 set(CMAKE_DISABLE_SOURCE_CHANGES ON)
 set(CMAKE_DISABLE_IN_SOURCE_BUILD ON)
 project(ld2016)
@@ -11,7 +11,7 @@ option(EMSCRIPTEN_ENABLED "Build using Emscripten" OFF)
 if(DEFINED ENV{EMSCRIPTEN} AND EMSCRIPTEN_ENABLED)
   if(CMAKE_BUILD_TYPE MATCHES debug)
     set(EMSCRIPTEN_FLAGS
-        "-Oz"
+        "-O2"
 #        "-s ASSERTIONS=2"
         "-s SAFE_HEAP=1"
         "-s STACK_OVERFLOW_CHECK=2"
@@ -55,34 +55,78 @@ if(DEFINED ENV{EMSCRIPTEN} AND EMSCRIPTEN_ENABLED)
   # Bullet physics libary
   set(BULLET_LIBRARIES "${CMAKE_SOURCE_DIR}/extern/bullet3/install-js/lib/libbullet.so")
   include_directories( SYSTEM ${CMAKE_SOURCE_DIR}/extern/bullet3/install-js/include/ )
-  include_directories( SYSTEM ${CMAKE_SOURCE_DIR}/extern/bullet3/src)
 
-  # GLM - Graphics Library Math
-  include_directories( SYSTEM ./extern/glm/ )
+else() # Not Emscripten
 
-else()
-  find_package( Bullet REQUIRED )
-  include_directories( SYSTEM ${BULLET_INCLUDE_DIRS} )
+  # SDL and options
+  add_subdirectory("./extern/sdl-mirror")
 
-  include_directories( SYSTEM extern/glm )
+  # Assimp and options
+  OPTION( BUILD_SHARED_LIBS "" ON )
+	OPTION( ASSIMP_DOUBLE_PRECISION "" OFF )
+	OPTION( ASSIMP_OPT_BUILD_PACKAGES "" OFF )
+	OPTION( ASSIMP_ANDROID_JNIIOSYSTEM "" OFF )
+	OPTION( ASSIMP_NO_EXPORT "" OFF )
+	OPTION( ASSIMP_BUILD_ZLIB "" OFF )
+	option( ASSIMP_BUILD_ASSIMP_TOOLS "" ON )
+	option ( ASSIMP_BUILD_SAMPLES "" OFF )
+	OPTION ( ASSIMP_BUILD_TESTS "" OFF )
+	OPTION ( ASSIMP_COVERALLS "" OFF )
+  add_subdirectory("./extern/assimp")
 
-  find_package( SDL2 REQUIRED )
-  include_directories( SYSTEM ${SDL2_INCLUDE_DIR} )
+  # Bullet and options
+  OPTION( BUILD_SHARED_LIBS "" ON )
+	OPTION( BUILD_DEMOS "" OFF )
+	OPTION( BUILD_UNIT_TESTS "" OFF )
+	OPTION( BUILD_CPU_DEMOS "" OFF )
+	OPTION( BUILD_BULLET2_DEMOS "" OFF )
+	OPTION( BUILD_EXTRAS "" OFF )
+  add_subdirectory("./extern/bullet3")
 
-  find_package( GLEW REQUIRED )
-  include_directories( SYSTEM ${GLEW_INCLUDE_DIR} )
+  # Epoxy
+  include(ExternalProject)
+  ExternalProject_Add( epoxy
+    SOURCE_DIR ./extern/libepoxy
+    DOWNLOAD_COMMAND ""
+    UPDATE_COMMAND ""
+    BUILD_COMMAND "@CMAKE_COMMAND@ --build"
+    #PREFIX ${CMAKE_BINARY_DIR}/epoxy
+    #INSTALL_COMMAND
+    #  "--build --target install -j12"
+  )
+
+#  find_package( ASSIMP REQUIRED )
+#  include_directories( SYSTEM ${ASSIMP_INCLUDE_DIR} )
+
+#  find_package( Bullet REQUIRED )
+#  include_directories( SYSTEM ${BULLET_INCLUDE_DIRS} )
+
+#  find_package( SDL2 REQUIRED )
+#  include_directories( SYSTEM ${SDL2_INCLUDE_DIR} )
+
+#  find_package( GLEW REQUIRED )
+#  include_directories( SYSTEM ${GLEW_INCLUDE_DIR} )
 
   find_package( OpenGL REQUIRED )
   include_directories( SYSTEM ${OPENGL_INCLUDE_DIR} )
-
-  find_package( ASSIMP REQUIRED )
-  include_directories( SYSTEM ${ASSIMP_INCLUDE_DIR} )
 
   get_property(dirs DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY INCLUDE_DIRECTORIES)
   foreach(dir ${dirs})
     message(STATUS "dir='${dir}'")
   endforeach()
 endif()
-include_directories( SYSTEM extern/stb)
+
+# GLM - Graphics Library Math (header only)
+include_directories( SYSTEM ${CMAKE_SOURCE_DIR}/extern/glm/ )
+# STB image loading library (header only)
+include_directories( SYSTEM ${CMAKE_SOURCE_DIR}/extern/stb)
+# Bullet public headers
+include_directories( SYSTEM ${CMAKE_SOURCE_DIR}/extern/bullet3/src)
+# Epoxy public headers
+include_directories( SYSTEM ${CMAKE_SOURCE_DIR}/extern/libepoxy/include)
+# Assimp public headers
+include_directories( SYSTEM ${CMAKE_SOURCE_DIR}/extern/assimp/include)
+# SDL public headers
+include_directories( SYSTEM ${CMAKE_SOURCE_DIR}/extern/sdl-mirror/include)
 
 add_subdirectory("./src")

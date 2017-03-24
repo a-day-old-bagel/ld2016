@@ -57,6 +57,7 @@ bullet:
 	&& cd bullet3-build \
 	&& cmake \
 		-DCMAKE_BUILD_TYPE=debug \
+		-DBUILD_SHARED_LIBS=ON \
 		-DBUILD_DEMOS=OFF \
 		-DBUILD_UNIT_TESTS=OFF \
 		-DBUILD_CPU_DEMOS=OFF \

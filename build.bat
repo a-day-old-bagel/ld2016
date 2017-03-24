@@ -3,7 +3,7 @@ set MAKE="C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\bin\nmake.exe"
 set PATH=%PATH%;%EMSCRIPTEN%\bin
 call "C:\Program Files\Emscripten\emsdk_env.bat"
 call :build_assimp
-rem call :build_bullet
+call :build_bullet
 call :build
 goto :eof
 
@@ -23,19 +23,24 @@ cd ..\..
 goto :eof
 
 :build_bullet
-mkdir extern\bullet3\build-js
-mkdir extern\bullet3\install-js
-cd extern\bullet3\build-js
+mkdir extern\bullet3-build-js
+mkdir extern\bullet3-install-js
+cd extern\bullet3-build-js
 call emcmake cmake^
  -DCMAKE_MAKE_PROGRAM=%MAKE%^
- -DCMAKE_INSTALL_PREFIX=..\install-js^
+ -DCMAKE_INSTALL_PREFIX=..\bullet3-install-js^
  -G "Unix Makefiles"^
+ -DBUILD_SHARED_LIBS=ON^
  -DBUILD_DEMOS=OFF^
  -DBUILD_UNIT_TESTS=OFF^
- ..
+ -DBUILD_CPU_DEMOS=OFF^
+ -DBUILD_BULLET2_DEMOS=OFF^
+ -DBUILD_EXTRAS=OFF^
+ -DCMAKE_INSTALL_PREFIX=../bullet3-install^
+ ../bullet3
 call %MAKE% -j %NUMBER_OF_PROCESSORS%
 call %MAKE% install
-cd ..\..\..
+cd ..\..
 goto :eof
 
 :build
