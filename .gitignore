@@ -15,4 +15,5 @@
 
 # visual studio
 /build-msvs
-
+/.vs
+CMakeSettings.json
