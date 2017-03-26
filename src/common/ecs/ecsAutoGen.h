@@ -137,7 +137,7 @@ if (ENUM_##comp != ENUM_Existence) { \
     existence->turnOffFlags(ENUM_##comp); \
     for (auto dlgt : remCallbacks_##comp) { \
       if ((comps_Existence.at(id).componentsPresent & dlgt.likeness) != dlgt.likeness) { \
-        dlgt.dlgt(id, dlgt.data); \
+        dlgt.fire(id); \
       } \
     } \
   } \
@@ -149,7 +149,7 @@ if (ENUM_##comp != ENUM_Existence) { \
 
 #define _GEN_DEL_ENT(comp, i) \
 for (auto dlgt : remCallbacks_##comp) { /* give that id to all removal delegates no matter what */\
-  dlgt.dlgt(id, dlgt.data); \
+  dlgt.fire(id); \
 } \
 if (comps_##comp.count(id)) { /* delete all component data for that id if it exists */\
   comps_##comp.erase(id); \

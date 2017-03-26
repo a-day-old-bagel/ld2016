@@ -37,6 +37,7 @@ namespace ecs {
     Delegate<void(const entityId&, void* data)> dlgt;
     compMask likeness;
     void* data;
+    inline void fire(const entityId& id) { dlgt(id, data); }
   };
   typedef std::vector<EntNotifyDelegate> EntNotifyDelegates;
 

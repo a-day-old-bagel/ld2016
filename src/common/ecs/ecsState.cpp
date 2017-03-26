@@ -78,7 +78,7 @@ namespace ecs {
           existence->turnOnFlags(compType::flag);
           for (auto dlgt : callbacks) {
             if ((comps_Existence.at(id).componentsPresent & dlgt.likeness) == dlgt.likeness) {
-              dlgt.dlgt(id, dlgt.data);
+              dlgt.fire(id);
             }
           }
           return SUCCESS;
@@ -102,7 +102,7 @@ namespace ecs {
           coll.erase(id);
           for (auto dlgt : callbacks) {
             if ((comps_Existence.at(id).componentsPresent & dlgt.likeness) != dlgt.likeness) {
-              dlgt.dlgt(id, dlgt.data);
+              dlgt.fire(id);
             }
           }
           return SUCCESS;
